@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amigo 2 — Driver Console</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9; color: #1a1a2e; min-height: 100vh;
+    }
+    .top-bar {
+      background: #fff; border-bottom: 1px solid #e8eaf0;
+      padding: 0.9rem 1.5rem; display:flex; align-items:center; gap:0.6rem;
+    }
+    .top-bar-title { font-size:1rem; font-weight:800; }
+    .driver-tag {
+      margin-left:auto; font-size:0.72rem; font-weight:700;
+      background:#fff0fb; color:#c026d3; border:1px solid #f5d0fe;
+      padding:0.2rem 0.65rem; border-radius:999px;
+    }
+    .wrap { max-width:500px; margin:0 auto; padding:1.25rem 1.25rem 3rem; }
+    .hello-banner {
+      background: linear-gradient(135deg,#c026d3,#7c3aed);
+      color:#fff; border-radius:16px; padding:1.25rem 1.5rem;
+      margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem;
+    }
+    .hello-avatar {
+      width:52px;height:52px;border-radius:14px;
+      background:rgba(255,255,255,0.2);
+      display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;
+    }
+    .hello-text h2 { font-size:1.05rem;font-weight:700;margin-bottom:0.15rem; }
+    .hello-text p  { font-size:0.77rem;opacity:0.8; }
+    .panel {
+      background:#fff; border-radius:16px; border:1px solid #e8eaf0;
+      padding:1.4rem; margin-bottom:1.2rem;
+    }
+    .sec-title {
+      font-size:0.75rem;font-weight:700;letter-spacing:0.06em;
+      text-transform:uppercase;color:#999;margin-bottom:0.9rem;
+    }
+    label { display:block;font-size:0.82rem;font-weight:600;color:#555;margin-bottom:0.3rem; }
+    input[type=text] {
+      width:100%;padding:0.72rem 1rem;border-radius:10px;
+      border:1.5px solid #e8eaf0;font-size:0.93rem;outline:none;
+      color:#1a1a2e;background:#fff;margin-bottom:1rem;
+      transition:border-color 0.2s;
+    }
+    input[type=text]:focus { border-color:#c026d3; }
+    .toggle-row { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; }
+    .tog-btn {
+      padding:0.85rem;border-radius:12px;border:2px solid #e8eaf0;
+      background:#fff;font-size:0.88rem;font-weight:700;
+      cursor:pointer;transition:all 0.18s;text-align:center;
+    }
+    .tog-btn:active { transform:scale(0.97); }
+    .tog-green { background:#d1fae5;border-color:#10b981;color:#065f46; }
+    .tog-red   { background:#fee2e2;border-color:#ef4444;color:#991b1b; }
+    .status-hint {
+      display:flex;align-items:center;gap:0.5rem;
+      padding:0.7rem 0.9rem;border-radius:10px;
+      background:#f8fafc;border:1px solid #e8eaf0;
+      font-size:0.8rem;font-weight:600;color:#555;
+    }
+    .sdot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+    .sdot-g { background:#10b981; }
+    .sdot-r { background:#ef4444; }
+    .map-box {
+      height:260px;border-radius:12px;overflow:hidden;
+      border:1px solid #e8eaf0;margin-bottom:1rem;position:relative;
+    }
+    .map-box-inner { height:100%;width:100%; }
+    .map-lbl {
+      position:absolute;top:9px;left:9px;z-index:500;
+      background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);
+      padding:0.28rem 0.65rem;border-radius:7px;
+      font-size:0.7rem;font-weight:700;color:#1a1a2e;
+      border:1px solid #e8eaf0;pointer-events:none;
+      display:flex;align-items:center;gap:4px;
+    }
+    .gps-track-btn {
+      width:100%;padding:0.85rem;border-radius:12px;border:none;
+      font-size:0.9rem;font-weight:700;cursor:pointer;
+      transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;
+    }
+    .gps-start { background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,0.3); }
+    .gps-stop  { background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 12px rgba(239,68,68,0.3); }
+    .gps-track-btn:hover { opacity:0.9;transform:scale(1.02); }
+    .gps-track-btn:active { transform:scale(0.97); }
+    .gps-status-bar {
+      text-align:center;font-size:0.72rem;font-weight:700;
+      padding:0.35rem;border-radius:8px;margin-top:0.6rem;
+    }
+    .gs-inactive { background:#f1f5f9;color:#94a3b8; }
+    .gs-active   { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
+    .gs-error    { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+    .gs-waiting  { background:#fef3c7;color:#92400e;border:1px solid #fde68a; }
+    .save-btn {
+      width:100%;padding:0.95rem;border-radius:12px;border:none;
+      background:linear-gradient(135deg,#c026d3,#7c3aed);color:#fff;
+      font-size:0.95rem;font-weight:700;
+      cursor:pointer;transition:opacity 0.2s,transform 0.15s;
+    }
+    .save-btn:hover { opacity:0.9; }
+    .save-btn:active { transform:scale(0.97); }
+    .last-saved { font-size:0.7rem;color:#bbb;text-align:center;margin-top:0.5rem; }
+    .toast {
+      position:fixed;bottom:1.5rem;left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:#1a1a2e;color:#fff;
+      padding:0.75rem 1.4rem;border-radius:999px;
+      font-size:0.85rem;font-weight:600;
+      transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index:9999;white-space:nowrap;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+    .divider { height:1px;background:#f0f0f0;margin:1rem 0; }
+    .drv-pin { display:flex;flex-direction:column;align-items:center; }
+    .drv-pin-dot {
+      width:14px;height:14px;border-radius:50%;
+      background:#c026d3;border:3px solid #fff;
+      box-shadow:0 2px 8px rgba(192,38,211,0.55);
+    }
+    .drv-pin-label {
+      background:#fff;color:#1a1a2e;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      font-size:11px;font-weight:800;
+      padding:2px 7px;border-radius:6px;margin-top:3px;
+      border:1px solid #e8eaf0;border-bottom:2px solid #c026d3;
+      white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar">
+  <span style="font-size:1.3rem">🛵</span>
+  <span class="top-bar-title">Driver Console</span>
+  <span class="driver-tag">AMIGO 2</span>
+</div>
+
+<div class="wrap">
+  <div class="hello-banner">
+    <div class="hello-avatar">🧑‍🔧</div>
+    <div class="hello-text">
+      <h2 id="hello-name">Hello, Driver 2!</h2>
+      <p>Manage your availability &amp; location below</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sec-title">Your Profile</div>
+    <label for="inp-name">Display Name</label>
+    <input type="text" id="inp-name" placeholder="e.g. Kapil Singh">
+    <label for="inp-phone">WhatsApp Number (with country code)</label>
+    <input type="text" id="inp-phone" placeholder="e.g. 919876543210">
+    <div class="divider"></div>
+    <div class="sec-title" style="margin-bottom:0.8rem">Availability</div>
+    <div class="toggle-row">
+      <button class="tog-btn" id="btn-avail" onclick="setStatus('active')">✅ Available</button>
+      <button class="tog-btn" id="btn-unavail" onclick="setStatus('inactive')">❌ Unavailable</button>
+    </div>
+    <div class="status-hint">
+      <span class="sdot sdot-g" id="shint-dot"></span>
+      <span id="shint-text">Status: Available</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sec-title">Live Location</div>
+    <div class="map-box">
+      <div class="map-box-inner" id="driver-map"></div>
+      <div class="map-lbl" id="map-lbl">📍 My Location</div>
+    </div>
+    <button class="gps-track-btn gps-start" id="gps-btn" onclick="toggleTracking()">
+      📡 Start GPS Tracking
+    </button>
+    <div class="gps-status-bar gs-inactive" id="gps-bar">GPS: Inactive</div>
+  </div>
+
+  <button class="save-btn" onclick="saveData()">Save &amp; Publish</button>
+  <p class="last-saved" id="last-saved-lbl">Not saved yet</p>
+</div>
+
+<div class="toast" id="toast">✓ Saved! Customers can see your status.</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIREBASE CONFIG — paste YOUR config values below
+     Get them from: Firebase Console → Project Settings → Your Apps
+     ═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── FIREBASE CONFIG ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyABLa7-9IJSfrielbwIJ64C4XbpDSLICak",
+    authDomain: "campus-delivery-e82c1.firebaseapp.com",
+    projectId: "campus-delivery-e82c1",
+    storageBucket: "campus-delivery-e82c1.firebasestorage.app",
+    messagingSenderId: "842614092897",
+    appId: "1:842614092897:web:33e6671ae5cab5e2efa620"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const MY_ID       = 'amigo2';
+  const DEFAULT_LOC  = [17.9837, 79.5300];
+  const amigoRef    = doc(db, 'amigos', MY_ID);
+
+  let curStatus = 'inactive';
+  let watchId   = null;
+  let myLoc     = DEFAULT_LOC;
+  let map, marker;
+
+  /* ── helpers ── */
+  function makeIcon(name) {
+    return L.divIcon({
+      className:'',
+      html:`<div class="drv-pin"><div class="drv-pin-dot"></div><div class="drv-pin-label">${name}</div></div>`,
+      iconSize:[120,38], iconAnchor:[60,7]
+    });
+  }
+  function setGPSBar(msg, cls) {
+    const el = document.getElementById('gps-bar');
+    el.textContent = msg; el.className = 'gps-status-bar ' + cls;
+  }
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  /* ── status toggle ── */
+  window.setStatus = function(s) { curStatus = s; renderToggle(); };
+  function renderToggle() {
+    document.getElementById('btn-avail').className   = 'tog-btn'+(curStatus==='active'?' tog-green':'');
+    document.getElementById('btn-unavail').className = 'tog-btn'+(curStatus==='inactive'?' tog-red':'');
+    const dot = document.getElementById('shint-dot');
+    const txt = document.getElementById('shint-text');
+    if (curStatus === 'active') {
+      dot.className = 'sdot sdot-g';
+      txt.textContent = 'Status: Available — visible to customers';
+    } else {
+      dot.className = 'sdot sdot-r';
+      txt.textContent = 'Status: Unavailable — hidden from customers';
+    }
+  }
+
+  /* ── load UI from Firestore on page load ── */
+  async function loadUI() {
+    try {
+      const snap = await getDoc(amigoRef);
+      if (snap.exists()) {
+        const me = snap.data();
+        document.getElementById('inp-name').value  = me.name  || '';
+        document.getElementById('inp-phone').value = me.phone || '';
+        curStatus = me.status || 'inactive';
+        if (me.location && me.location.length === 2) myLoc = me.location;
+        if (me.updatedAt) {
+          const ts = me.updatedAt.toDate ? me.updatedAt.toDate() : new Date(me.updatedAt);
+          document.getElementById('last-saved-lbl').textContent =
+            'Last saved: ' + ts.toLocaleTimeString();
+        }
+        document.getElementById('hello-name').textContent =
+          'Hello, ' + (me.name || 'Driver') + '!';
+        if (me.isTracking && watchId === null) startWatch();
+      }
+    } catch(e) {
+      console.warn('Firestore load error:', e);
+    }
+    renderToggle();
+  }
+
+  /* ── Save & Publish → Firestore setDoc ── */
+  window.saveData = async function() {
+    const name  = document.getElementById('inp-name').value.trim()  || 'Driver 2';
+    const phone = document.getElementById('inp-phone').value.trim().replace(/\D/g,'');
+    try {
+      await setDoc(amigoRef, {
+        name,
+        phone,
+        status: curStatus,
+        location: myLoc,
+        isTracking: watchId !== null,
+        updatedAt: serverTimestamp()
+      });
+      document.getElementById('hello-name').textContent = 'Hello, ' + name + '!';
+      document.getElementById('last-saved-lbl').textContent =
+        'Last saved: ' + new Date().toLocaleTimeString();
+      if (marker) marker.setIcon(makeIcon(name));
+      if (document.getElementById('map-lbl'))
+        document.getElementById('map-lbl').textContent = '📍 ' + name;
+      showToast();
+    } catch(e) {
+      alert('Save failed: ' + e.message);
+    }
+  };
+
+  /* ── GPS tracking → continuously update Firestore ── */
+  window.toggleTracking = function() {
+    if (watchId !== null) stopWatch(); else startWatch();
+  };
+
+  function startWatch() {
+    if (!('geolocation' in navigator)) {
+      setGPSBar('GPS not supported', 'gs-error'); return;
+    }
+    setGPSBar('Requesting permission…', 'gs-waiting');
+    watchId = navigator.geolocation.watchPosition(
+      async pos => {
+        myLoc = [pos.coords.latitude, pos.coords.longitude];
+        if (marker) marker.setLatLng(myLoc);
+        if (map) map.panTo(myLoc);
+        setGPSBar('GPS Active — sharing live location', 'gs-active');
+        document.getElementById('gps-btn').textContent = '🛑 Stop GPS Tracking';
+        document.getElementById('gps-btn').className   = 'gps-track-btn gps-stop';
+        // Continuously push location to Firestore
+        try {
+          await setDoc(amigoRef, {
+            location: myLoc, isTracking: true, updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch(e) { console.warn('GPS update error:', e); }
+      },
+      async err => {
+        let msg = 'GPS Error';
+        if (err.code === 1) msg = 'Permission denied';
+        if (err.code === 2) msg = 'Signal unavailable';
+        if (err.code === 3) msg = 'Request timeout';
+        setGPSBar(msg, 'gs-error');
+        watchId = null;
+        document.getElementById('gps-btn').textContent = '📡 Start GPS Tracking';
+        document.getElementById('gps-btn').className   = 'gps-track-btn gps-start';
+        try {
+          await setDoc(amigoRef, { isTracking: false }, { merge: true });
+        } catch(e) {}
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  }
+
+  async function stopWatch() {
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    setGPSBar('GPS Stopped', 'gs-inactive');
+    document.getElementById('gps-btn').textContent = '📡 Start GPS Tracking';
+    document.getElementById('gps-btn').className   = 'gps-track-btn gps-start';
+    try {
+      await setDoc(amigoRef, {
+        isTracking: false, updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch(e) { console.warn('Stop GPS update error:', e); }
+  }
+
+  /* ── Map init ── */
+  function initMap() {
+    map = L.map('driver-map', {
+      zoomControl: true, attributionControl: false, scrollWheelZoom: false
+    }).setView(myLoc, 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const nameVal = document.getElementById('inp-name').value || 'Driver 2';
+    marker = L.marker(myLoc, { icon: makeIcon(nameVal) }).addTo(map);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        myLoc = [pos.coords.latitude, pos.coords.longitude];
+        marker.setLatLng(myLoc);
+        map.setView(myLoc, 16);
+      }, () => {});
+    }
+  }
+
+  /* ── Boot ── */
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadUI();
+    initMap();
+    if (marker) marker.setLatLng(myLoc);
+    if (map) map.setView(myLoc, 16);
+  });
+</script>
+</body>
+</html>

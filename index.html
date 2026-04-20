@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Delivery</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4fb;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+    .top-bar {
+      background: #fff;
+      border-bottom: 1px solid #e8eaf0;
+      padding: 0.9rem 1.5rem;
+      display: flex; align-items: center; gap: 0.6rem;
+      position: sticky; top: 0; z-index: 1000;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .top-bar-title { font-size: 1.05rem; font-weight: 800; color: #4f46e5; }
+    .live-pill {
+      margin-left: auto; font-size: 0.7rem; font-weight: 700;
+      background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;
+      padding: 0.2rem 0.65rem; border-radius: 999px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .blink-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #10b981; animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .hero { text-align: center; padding: 2rem 1.5rem 1rem; }
+    .hero h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.3rem; }
+    .hero p { font-size: 0.88rem; color: #777; }
+    .cards-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem 1.25rem 2.5rem;
+      max-width: 920px; margin: 0 auto;
+    }
+    .amigo-card {
+      background: #fff; border-radius: 20px;
+      border: 1px solid #e8eaf0; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .amigo-card:nth-child(2) { animation-delay: 0.1s; }
+    .amigo-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .amigo-card.unavailable { opacity: 0.65; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+    .card-body { padding: 1.25rem 1.25rem 1rem; }
+    .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .identity { display: flex; align-items: center; gap: 0.75rem; }
+    .avatar {
+      width: 50px; height: 50px; border-radius: 14px;
+      background: linear-gradient(135deg, #eef0ff, #fce7f3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .amigo-name { font-size: 1.05rem; font-weight: 800; }
+    .status-badge {
+      font-size: 0.68rem; font-weight: 700;
+      padding: 0.22rem 0.65rem; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-top: 3px; display: inline-block;
+    }
+    .badge-on  { background: #d1fae5; color: #065f46; }
+    .badge-off { background: #fee2e2; color: #991b1b; }
+    .req-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      width: 100%; padding: 0.85rem; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      color: #fff; font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 4px 12px rgba(37,211,102,0.25);
+    }
+    .req-btn:hover { opacity: 0.92; transform: scale(1.02); }
+    .req-btn:active { transform: scale(0.97); }
+    .req-btn.disabled { background: #d1d5db; box-shadow: none; pointer-events: none; cursor: not-allowed; }
+    .wa-icon { width: 1.1em; height: 1.1em; }
+
+    /* ── REQUEST DELIVERY MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(15,17,35,0.55);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #fff; border-radius: 22px;
+      width: 100%; max-width: 420px;
+      padding: 1.8rem 1.6rem 1.4rem;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      transform: translateY(24px) scale(0.97);
+      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+    .modal-title {
+      font-size: 1.35rem; font-weight: 800; color: #1a1a2e;
+      margin-bottom: 1.3rem; letter-spacing: -0.02em;
+    }
+    .modal-label {
+      display: block; font-size: 0.82rem; font-weight: 700;
+      color: #444; margin-bottom: 0.35rem;
+    }
+    .modal-input, .modal-select {
+      width: 100%; padding: 0.75rem 1rem;
+      border-radius: 10px; border: 1.5px solid #e0e3ef;
+      font-size: 0.93rem; color: #1a1a2e;
+      background: #f7f8fc; outline: none;
+      margin-bottom: 1.1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    .modal-input:focus, .modal-select:focus {
+      border-color: #25d366;
+      box-shadow: 0 0 0 3px rgba(37,211,102,0.12);
+    }
+    .modal-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.85rem center; padding-right: 2.2rem; }
+    .modal-wa-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+      width: 100%; padding: 0.9rem; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      color: #fff; font-weight: 800; font-size: 0.97rem;
+      cursor: pointer; margin-top: 0.4rem;
+      box-shadow: 0 4px 18px rgba(37,211,102,0.3);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .modal-wa-btn:hover { opacity: 0.92; transform: scale(1.02); }
+    .modal-wa-btn:active { transform: scale(0.97); }
+    .modal-cancel {
+      display: block; width: 100%; text-align: center;
+      padding: 0.65rem; margin-top: 0.5rem;
+      font-size: 0.85rem; font-weight: 600; color: #888;
+      background: none; border: none; cursor: pointer;
+      transition: color 0.15s;
+    }
+    .modal-cancel:hover { color: #ef4444; }
+    /* MAP SECTION */
+    .map-section { position: relative; height: 270px; border-top: 1px solid #f0f0f0; }
+    .map-el { height: 100%; width: 100%; }
+    .map-overlay-label {
+      position: absolute; top: 10px; left: 10px; z-index: 500;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(4px);
+      padding: 0.3rem 0.7rem; border-radius: 8px;
+      font-size: 0.7rem; font-weight: 700; color: #1a1a2e;
+      border: 1px solid #e8eaf0;
+      display: flex; align-items: center; gap: 5px;
+      pointer-events: none; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .gps-badge {
+      position: absolute; bottom: 10px; right: 10px; z-index: 500;
+      font-size: 0.65rem; font-weight: 700;
+      padding: 0.2rem 0.6rem; border-radius: 999px; pointer-events: none;
+    }
+    .gps-on  { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .gps-off { background: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb; }
+    .updated-row {
+      font-size: 0.7rem; color: #bbb; text-align: right;
+      padding: 0.45rem 1.25rem 0.8rem;
+    }
+    /* Custom map marker */
+    .drv-pin { display: flex; flex-direction: column; align-items: center; }
+    .drv-pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #4f46e5; border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(79,70,229,0.55);
+    }
+    .drv-pin-label {
+      background: #fff; color: #1a1a2e;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px; font-weight: 800;
+      padding: 2px 7px; border-radius: 6px;
+      margin-top: 3px; border: 1px solid #e8eaf0;
+      border-bottom: 2px solid #4f46e5;
+      white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span style="font-size:1.3rem">🛵</span>
+  <span class="top-bar-title">Amigos Delivery</span>
+  <span class="live-pill"><span class="blink-dot"></span>Live Tracking</span>
+</div>
+
+<div class="hero">
+  <h1>Request a Campus Delivery 📦</h1>
+  <p>Pick an available amigo — tap WhatsApp to send your request</p>
+</div>
+
+<div class="cards-wrap">
+
+  <!-- AMIGO 1 -->
+  <div class="amigo-card" id="card-amigo1">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="identity">
+          <div class="avatar">🧑‍💻</div>
+          <div>
+            <div class="amigo-name" id="name-amigo1">Driver 1</div>
+            <span class="status-badge badge-on" id="badge-amigo1">Available</span>
+          </div>
+        </div>
+      </div>
+      <button class="req-btn" id="btn-amigo1" onclick="openModal('amigo1')">
+        <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Request Delivery
+      </button>
+    </div>
+    <div class="map-section">
+      <div class="map-el" id="map-amigo1"></div>
+      <div class="map-overlay-label">
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo1">Driver 1</span>
+      </div>
+      <div class="gps-badge gps-off" id="gpsbadge-amigo1">GPS Off</div>
+    </div>
+    <div class="updated-row" id="updated-amigo1">Not updated yet</div>
+  </div>
+
+  <!-- AMIGO 2 -->
+  <div class="amigo-card" id="card-amigo2">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="identity">
+          <div class="avatar">🧑‍🔧</div>
+          <div>
+            <div class="amigo-name" id="name-amigo2">Driver 2</div>
+            <span class="status-badge badge-on" id="badge-amigo2">Available</span>
+          </div>
+        </div>
+      </div>
+      <button class="req-btn" id="btn-amigo2" onclick="openModal('amigo2')">
+        <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Request Delivery
+      </button>
+    </div>
+    <div class="map-section">
+      <div class="map-el" id="map-amigo2"></div>
+      <div class="map-overlay-label">
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo2">Driver 2</span>
+      </div>
+      <div class="gps-badge gps-off" id="gpsbadge-amigo2">GPS Off</div>
+    </div>
+    <div class="updated-row" id="updated-amigo2">Not updated yet</div>
+  </div>
+
+</div>
+
+<!-- ── REQUEST DELIVERY MODAL ── -->
+<div class="modal-overlay" id="delivery-modal" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">Request Delivery</div>
+
+    <label class="modal-label" for="modal-user-name">Your Name</label>
+    <input class="modal-input" id="modal-user-name" type="text" placeholder="e.g. Rahul" autocomplete="off">
+
+    <label class="modal-label" for="modal-platform">Delivery Platform</label>
+    <select class="modal-select" id="modal-platform">
+      <option value="Zomato">🍕 Zomato</option>
+      <option value="Swiggy">🧡 Swiggy</option>
+      <option value="Amazon">📦 Amazon</option>
+      <option value="Flipkart">🛍️ Flipkart</option>
+      <option value="Blinkit">⚡ Blinkit</option>
+      <option value="Other">📋 Other</option>
+    </select>
+
+    <label class="modal-label" for="modal-hostel">Hostel / Destination</label>
+    <input class="modal-input" id="modal-hostel" type="text" placeholder="e.g. Block A, Room 302" autocomplete="off">
+
+    <button class="modal-wa-btn" id="modal-send-btn" onclick="sendRequest()">
+      <svg style="width:1.15em;height:1.15em" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      Place Delivery Request
+    </button>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIREBASE CONFIG — paste YOUR config values below
+     Get them from: Firebase Console → Project Settings → Your Apps
+     ═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── FIREBASE CONFIG ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyABLa7-9IJSfrielbwIJ64C4XbpDSLICak",
+    authDomain: "campus-delivery-e82c1.firebaseapp.com",
+    projectId: "campus-delivery-e82c1",
+    storageBucket: "campus-delivery-e82c1.firebasestorage.app",
+    messagingSenderId: "842614092897",
+    appId: "1:842614092897:web:33e6671ae5cab5e2efa620"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const DEFAULT_LOC = [17.9837, 79.5300];
+
+  /* ── Shared amigo data cache (for modal WhatsApp) ── */
+  const amigoCache = {
+    amigo1: { name:'Driver 1', phone:'', status:'active', location:null, isTracking:false },
+    amigo2: { name:'Driver 2', phone:'', status:'active', location:null, isTracking:false }
+  };
+
+  /* ── Map + marker state ── */
+  const maps={}, markers={}, prevLoc={};
+
+  /* ── Helpers ── */
+  function makeIcon(name) {
+    return L.divIcon({
+      className: '',
+      html: `<div class="drv-pin"><div class="drv-pin-dot"></div><div class="drv-pin-label">${name}</div></div>`,
+      iconSize: [120,38], iconAnchor:[60,7]
+    });
+  }
+  function timeAgo(ts) {
+    if (!ts) return 'Not updated yet';
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    const d = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (d < 10)   return 'Updated just now';
+    if (d < 60)   return 'Updated ' + d + 's ago';
+    if (d < 3600) return 'Updated ' + Math.floor(d/60) + 'm ago';
+    return 'Updated ' + Math.floor(d/3600) + 'h ago';
+  }
+
+  /* ── Init maps ── */
+  ['amigo1','amigo2'].forEach(id => {
+    maps[id] = L.map('map-'+id, {
+      zoomControl: true, attributionControl: false, scrollWheelZoom: false
+    }).setView(DEFAULT_LOC, 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(maps[id]);
+    markers[id] = L.marker(DEFAULT_LOC, { icon: makeIcon(id==='amigo1'?'Driver 1':'Driver 2') }).addTo(maps[id]);
+    prevLoc[id] = DEFAULT_LOC;
+  });
+
+  /* ── Update UI for one amigo from Firestore snapshot ── */
+  function applySnapshot(id, data) {
+    // Merge into cache
+    amigoCache[id] = { ...amigoCache[id], ...data };
+
+    const isActive = data.status === 'active';
+    const loc = (data.location && data.location.length === 2) ? data.location : DEFAULT_LOC;
+    const name = data.name || id;
+
+    // Name
+    document.getElementById('name-'+id).textContent    = name;
+    document.getElementById('maplabel-'+id).textContent = name;
+
+    // Status badge
+    const badge = document.getElementById('badge-'+id);
+    badge.textContent = isActive ? 'Available' : 'Unavailable';
+    badge.className   = 'status-badge ' + (isActive ? 'badge-on' : 'badge-off');
+
+    // Card dim
+    document.getElementById('card-'+id).classList.toggle('unavailable', !isActive);
+
+    // WhatsApp button — enable only if active AND has a phone number
+    const btn = document.getElementById('btn-'+id);
+    if (isActive && data.phone) {
+      btn.classList.remove('disabled');
+    } else {
+      btn.classList.add('disabled');
+    }
+
+    // GPS badge
+    const pill = document.getElementById('gpsbadge-'+id);
+    if (data.isTracking) { pill.textContent='GPS Live'; pill.className='gps-badge gps-on'; }
+    else                  { pill.textContent='GPS Off';  pill.className='gps-badge gps-off'; }
+
+    // "Updated X ago" row
+    document.getElementById('updated-'+id).textContent = timeAgo(data.updatedAt);
+
+    // Map marker
+    if (markers[id]) {
+      markers[id].setLatLng(loc);
+      markers[id].setIcon(makeIcon(name));
+    }
+    const pl = prevLoc[id];
+    if (!pl || pl[0] !== loc[0] || pl[1] !== loc[1]) {
+      if (maps[id]) maps[id].panTo(loc);
+      prevLoc[id] = loc;
+    }
+  }
+
+  /* ── Real-time listeners via onSnapshot ── */
+  ['amigo1','amigo2'].forEach(id => {
+    const ref = doc(db, 'amigos', id);
+    onSnapshot(ref, snap => {
+      if (snap.exists()) {
+        applySnapshot(id, snap.data());
+      }
+    }, err => {
+      console.warn('onSnapshot error for', id, err);
+    });
+  });
+
+  /* ─────────────────────────────────────────
+     MODAL LOGIC (unchanged, but phone comes
+     from Firestore cache, not localStorage)
+  ───────────────────────────────────────── */
+  let activeModalAmigo = null;
+
+  window.openModal = function(amigoId) {
+    const a = amigoCache[amigoId];
+    if (!a || a.status !== 'active' || !a.phone) return;
+    activeModalAmigo = amigoId;
+    document.getElementById('modal-user-name').value = '';
+    document.getElementById('modal-platform').value  = 'Zomato';
+    document.getElementById('modal-hostel').value     = '';
+    document.getElementById('delivery-modal').classList.add('open');
+    setTimeout(() => document.getElementById('modal-user-name').focus(), 120);
+  };
+
+  window.closeModal = function() {
+    document.getElementById('delivery-modal').classList.remove('open');
+    activeModalAmigo = null;
+  };
+
+  window.handleOverlayClick = function(e) {
+    if (e.target === document.getElementById('delivery-modal')) closeModal();
+  };
+
+  window.sendRequest = function() {
+    const userName = document.getElementById('modal-user-name').value.trim();
+    const platform = document.getElementById('modal-platform').value;
+    const hostel   = document.getElementById('modal-hostel').value.trim();
+    if (!userName) {
+      document.getElementById('modal-user-name').focus();
+      document.getElementById('modal-user-name').style.borderColor = '#ef4444';
+      return;
+    }
+    if (!hostel) {
+      document.getElementById('modal-hostel').focus();
+      document.getElementById('modal-hostel').style.borderColor = '#ef4444';
+      return;
+    }
+    const a     = amigoCache[activeModalAmigo];
+    const phone = String(a.phone).replace(/\D/g,'');
+    const msg   = `Hey Amigo! I need a campus delivery%0A%0A👤 *Name:* ${encodeURIComponent(userName)}%0A📦 *Platform:* ${encodeURIComponent(platform)}%0A📍 *Deliver to:* ${encodeURIComponent(hostel)}`;
+    window.open('https://wa.me/' + phone + '?text=' + msg, '_blank');
+    closeModal();
+  };
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
