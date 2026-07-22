@@ -134,9 +134,68 @@
       border:1px solid #e8eaf0;border-bottom:2px solid #4f46e5;
       white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.1);
     }
+
+    /* ── PASSWORD LOGIN OVERLAY (new) ── */
+    #login-overlay {
+      position:fixed; inset:0; z-index:99999;
+      background:#f4f6f9;
+      display:flex; align-items:center; justify-content:center;
+      padding:1.25rem;
+    }
+    .login-card {
+      background:#fff; border-radius:16px; border:1px solid #e8eaf0;
+      padding:1.75rem 1.5rem; width:100%; max-width:360px;
+      box-shadow:0 8px 30px rgba(26,26,46,0.08);
+    }
+    .login-avatar {
+      width:52px;height:52px;border-radius:14px;
+      background:linear-gradient(135deg,#4f46e5,#7c3aed);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.6rem;margin-bottom:1rem;
+    }
+    .login-title { font-size:1.05rem;font-weight:800;margin-bottom:0.25rem; }
+    .login-sub { font-size:0.8rem;color:#999;margin-bottom:1.1rem; }
+    #login-pass {
+      width:100%;padding:0.72rem 1rem;border-radius:10px;
+      border:1.5px solid #e8eaf0;font-size:0.93rem;outline:none;
+      color:#1a1a2e;background:#fff;margin-bottom:0.6rem;
+      transition:border-color 0.2s;
+    }
+    #login-pass:focus { border-color:#4f46e5; }
+    .login-btn {
+      width:100%;padding:0.85rem;border-radius:12px;border:none;
+      background:#4f46e5;color:#fff;font-size:0.9rem;font-weight:700;
+      cursor:pointer;transition:opacity 0.2s,transform 0.15s;
+    }
+    .login-btn:hover { opacity:0.9; }
+    .login-btn:active { transform:scale(0.97); }
+    .login-err {
+      font-size:0.78rem;font-weight:700;color:#991b1b;
+      background:#fee2e2;border:1px solid #fca5a5;
+      border-radius:8px;padding:0.5rem 0.7rem;
+      margin-bottom:0.6rem; display:none;
+    }
+    .login-err.show { display:block; }
+    #app-content { display:none; }
   </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PASSWORD LOGIN OVERLAY (new feature)
+     ═══════════════════════════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-avatar">🔒</div>
+    <div class="login-title">Driver Console Login</div>
+    <div class="login-sub">Enter your password to continue</div>
+    <div class="login-err" id="login-err">Incorrect Password</div>
+    <input type="password" id="login-pass" placeholder="Password" autocomplete="off">
+    <button class="login-btn" onclick="checkPassword()">Unlock</button>
+  </div>
+</div>
+
+<div id="app-content">
 <div class="top-bar">
   <span style="font-size:1.3rem">🛵</span>
   <span class="top-bar-title">Driver Console</span>
@@ -189,6 +248,8 @@
 </div>
 
 <div class="toast" id="toast">✓ Saved! Customers can see your status.</div>
+</div>
+<!-- /#app-content -->
 
 <!-- ═══════════════════════════════════════════════════════════════
      FIREBASE CONFIG — paste YOUR config values below
@@ -384,6 +445,41 @@
     // Update marker position after map init if location was loaded from Firestore
     if (marker) marker.setLatLng(myLoc);
     if (map) map.setView(myLoc, 16);
+  });
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PASSWORD PROTECTION LOGIC (new feature)
+     Replace AMIGO_PASSWORD below with your real password.
+     ═══════════════════════════════════════════════════════ -->
+<script>
+  const AMIGO_PASSWORD = "YOUR_PASSWORD";
+
+  function checkPassword() {
+    const input = document.getElementById('login-pass');
+    const errEl = document.getElementById('login-err');
+    if (input.value === AMIGO_PASSWORD) {
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+    } else {
+      errEl.classList.add('show');
+      errEl.textContent = 'Incorrect Password';
+      input.value = '';
+      input.focus();
+    }
+  }
+  window.checkPassword = checkPassword;
+
+  document.getElementById('login-pass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      checkPassword();
+    }
+  });
+
+  // Autofocus the password field on load
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('login-pass').focus();
   });
 </script>
 </body>
