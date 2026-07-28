@@ -52,6 +52,7 @@
       animation: fadeUp 0.4s ease both;
     }
     .amigo-card:nth-child(2) { animation-delay: 0.1s; }
+    .amigo-card:nth-child(3) { animation-delay: 0.2s; }
     .amigo-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
     .amigo-card.unavailable { opacity: 0.65; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
@@ -221,6 +222,24 @@
 
 <div class="cards-wrap">
 
+  <!-- NEED HELP CARD (POSITIONED FIRST) -->
+  <div class="amigo-card" id="card-help">
+    <div class="card-body">
+      <div class="card-top">
+        <div class="identity">
+          <div class="avatar">🤝</div>
+          <div>
+            <div class="amigo-name">Need Help? 🤝</div>
+            <div class="driver-phone">Can't reach an Amigo? We're here to help.</div>
+          </div>
+        </div>
+      </div>
+      <button class="req-btn" id="btn-help" onclick="openModal('help')" style="margin-bottom:0;">
+        💬 Get Help
+      </button>
+    </div>
+  </div>
+
   <!-- AMIGO 1 -->
   <div class="amigo-card" id="card-amigo1">
     <div class="card-body">
@@ -346,7 +365,8 @@
   /* ── Shared amigo data cache (for modal WhatsApp & Call) ── */
   const amigoCache = {
     amigo1: { name:'Amigo', phone:'', status:'active', location:null, isTracking:false },
-    amigo2: { name:'Amigo', phone:'', status:'active', location:null, isTracking:false }
+    amigo2: { name:'Amigo', phone:'', status:'active', location:null, isTracking:false },
+    help:   { name:'Help', phone:'916309311788', status:'active', location:null, isTracking:false }
   };
 
   /* ── Map + marker state ── */
@@ -511,7 +531,7 @@
     const a     = amigoCache[activeModalAmigo];
     const phone = String(a.phone).replace(/\D/g,'');
     
-    // Updated WhatsApp message structure
+    // WhatsApp message structure
     const msg = `Campus Delivery Request%0A%0ACustomer:%0A${encodeURIComponent(userName)}%0A%0APlatform:%0A${encodeURIComponent(platform)}%0A%0AItem Description:%0A${encodeURIComponent(itemDesc)}%0A%0ADestination:%0A${encodeURIComponent(hostel)}`;
     
     window.open('https://wa.me/' + phone + '?text=' + msg, '_blank');
