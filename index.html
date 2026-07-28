@@ -14,6 +14,127 @@
       color: #1a1a2e;
       min-height: 100vh;
     }
+    .rating-section {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 24px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eaeaea;
+    text-align: center;
+    font-family: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .rating-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  /* Previous Experience Card */
+  .prev-experience-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border: 1px solid #edf2f7;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+
+  .prev-stars {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    color: #ffc107;
+  }
+
+  .prev-message {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #4a5568;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  /* Interactive User Rating Area */
+  .user-rating-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rating-prompt-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+  }
+
+  /* Star Rating Picker */
+  .star-picker {
+    display: inline-flex;
+    direction: row;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px;
+  }
+
+  .star-picker .star {
+    font-size: 2rem;
+    color: #cbd5e0;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .star-picker .star:hover {
+    transform: scale(1.2);
+  }
+
+  .star-picker .star.active {
+    color: #ffc107;
+  }
+
+  /* Thank You Container */
+  .thank-you-box {
+    display: none;
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: #f0fff4;
+    border: 1px solid #c6f6d5;
+    border-radius: 12px;
+    color: #22543d;
+    animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  .thank-you-stars {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    color: #ffc107;
+  }
+
+  .thank-you-message {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  /* Keyframe Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
     .top-bar {
       background: #fff;
       border-bottom: 1px solid #e8eaf0;
@@ -209,6 +330,32 @@
 </head>
 <body>
 
+  <div class="rating-section" id="ratingSection">
+  <h3>⭐ How was your experience?</h3>
+
+  <!-- Previous Experience Card -->
+  <div class="prev-experience-card">
+    <div class="prev-stars" id="prevStars"></div>
+    <p class="prev-message" id="prevMessage"></p>
+  </div>
+
+  <!-- Interactive Rating -->
+  <div class="user-rating-area">
+    <div class="star-picker" id="starPicker">
+      <span class="star" data-value="1">★</span>
+      <span class="star" data-value="2">★</span>
+      <span class="star" data-value="3">★</span>
+      <span class="star" data-value="4">★</span>
+      <span class="star" data-value="5">★</span>
+    </div>
+
+    <!-- Dynamic Thank You Box -->
+    <div class="thank-you-box" id="thankYouBox">
+      <div class="thank-you-stars" id="thankYouStars"></div>
+      <p class="thank-you-message" id="thankYouMessage"></p>
+    </div>
+  </div>
+</div>
 <div class="top-bar">
   <span style="font-size:1.3rem">🛵</span>
   <span class="top-bar-title">Amigos Delivery</span>
@@ -539,6 +686,115 @@
   };
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  (function () {
+    // 1. Data mapping for previous ratings (randomly selected on load)
+    const previousExperienceData = {
+      5: {
+        stars: "★★★★★",
+        text: "Looks like our previous customer rated us 5 stars! 🌟\nWe'll keep delivering with the same energy.\nNow it's your turn!"
+      },
+      4: {
+        stars: "★★★★☆",
+        text: "Looks like our previous customer had a great experience.\nWe're working hard to make every delivery even better.\nNow it's your turn!"
+      },
+      3: {
+        stars: "★★★☆☆",
+        text: "Looks like there was some room for improvement.\nWe're constantly improving Campus Delivery.\nNow tell us about your experience."
+      },
+      2: {
+        stars: "★★☆☆☆",
+        text: "Looks like we could have done better.\nEvery delivery teaches us something new.\nYour feedback will help us improve."
+      },
+      1: {
+        stars: "★☆☆☆☆",
+        text: "Looks like we missed expectations last time.\nWe're continuously working to improve.\nWe'd love to hear your experience."
+      }
+    };
+
+    // 2. Data mapping for user feedback thank-you responses
+    const thankYouData = {
+      5: {
+        stars: "★★★★★",
+        text: "Thank you so much!\nWe'll keep delivering with the same energy. 🚀"
+      },
+      4: {
+        stars: "★★★★☆",
+        text: "Thank you!\nWe'll work even harder to earn your 5 stars next time."
+      },
+      3: {
+        stars: "★★★☆☆",
+        text: "Thanks for your feedback!\nWe'll continue improving every day."
+      },
+      2: {
+        stars: "★★☆☆☆",
+        text: "Thank you for being honest.\nWe'll definitely work on improving."
+      },
+      1: {
+        stars: "★☆☆☆☆",
+        text: "We're sorry your experience wasn't great.\nThanks for helping us improve."
+      }
+    };
+
+    // DOM Elements
+    const prevStarsEl = document.getElementById("prevStars");
+    const prevMessageEl = document.getElementById("prevMessage");
+    const starPickerEl = document.getElementById("starPicker");
+    const stars = starPickerEl.querySelectorAll(".star");
+    const thankYouBox = document.getElementById("thankYouBox");
+    const thankYouStarsEl = document.getElementById("thankYouStars");
+    const thankYouMessageEl = document.getElementById("thankYouMessage");
+
+    let currentSelectedRating = 0;
+
+    // Load random previous rating on page initialization
+    function initRandomPreviousRating() {
+      const randomRating = Math.floor(Math.random() * 5) + 1; // 1 to 5
+      const data = previousExperienceData[randomRating];
+      prevStarsEl.textContent = data.stars;
+      prevMessageEl.textContent = data.text;
+    }
+
+    // Helper to highlight stars visually
+    function highlightStars(rating) {
+      stars.forEach((star) => {
+        const val = parseInt(star.getAttribute("data-value"));
+        if (val <= rating) {
+          star.classList.add("active");
+        } else {
+          star.classList.remove("active");
+        }
+      });
+    }
+
+    // Star interaction logic
+    stars.forEach((star) => {
+      // Hover effect
+      star.addEventListener("mouseenter", function () {
+        const hoverVal = parseInt(this.getAttribute("data-value"));
+        highlightStars(hoverVal);
+      });
+
+      // Click selection
+      star.addEventListener("click", function () {
+        currentSelectedRating = parseInt(this.getAttribute("data-value"));
+        highlightStars(currentSelectedRating);
+
+        // Display Thank-You Message
+        const responseData = thankYouData[currentSelectedRating];
+        thankYouStarsEl.textContent = responseData.stars;
+        thankYouMessageEl.textContent = responseData.text;
+        thankYouBox.style.display = "block";
+      });
+    });
+
+    // Reset star display to active selection when mouse leaves area
+    starPickerEl.addEventListener("mouseleave", function () {
+      highlightStars(currentSelectedRating);
+    });
+
+    // Initialize random selection
+    initRandomPreviousRating();
+  })();
 </script>
 </body>
 </html>
