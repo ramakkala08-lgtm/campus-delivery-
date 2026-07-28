@@ -89,7 +89,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 1.5rem;
-      padding: 1rem 1.25rem 2.5rem;
+      padding: 1rem 1.25rem 1.5rem;
       max-width: 920px; margin: 0 auto;
     }
     .amigo-card {
@@ -113,12 +113,12 @@
       font-size: 1.5rem; flex-shrink: 0;
     }
     .amigo-name { font-size: 1.05rem; font-weight: 800; }
-    .amigo-phone-text { font-size: 0.8rem; font-weight: 600; color: #666; margin-top: 1px; }
+    .amigo-phone-text { font-size: 0.82rem; font-weight: 600; color: #555; margin-top: 2px; }
     .status-badge {
       font-size: 0.68rem; font-weight: 700;
       padding: 0.22rem 0.65rem; border-radius: 999px;
       text-transform: uppercase; letter-spacing: 0.05em;
-      margin-top: 3px; display: inline-block;
+      margin-top: 4px; display: inline-block;
     }
     .badge-on  { background: #d1fae5; color: #065f46; }
     .badge-off { background: #fee2e2; color: #991b1b; }
@@ -150,6 +150,26 @@
     .call-btn.disabled { border-color: #cbd5e1; background: #f1f5f9; color: #94a3b8; pointer-events: none; cursor: not-allowed; }
 
     .wa-icon { width: 1.1em; height: 1.1em; }
+
+    /* ── DIRECT HELP ACTION TRIGGER BUTTON ── */
+    .help-trigger-wrap {
+      text-align: center;
+      margin: 0.5rem auto 2.5rem;
+    }
+    .help-trigger-btn {
+      background: transparent;
+      color: #4f46e5;
+      border: 1px dashed #4f46e5;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .help-trigger-btn:hover {
+      background: #eef2ff;
+    }
 
     /* ── REQUEST DELIVERY MODAL ── */
     .modal-overlay {
@@ -254,11 +274,15 @@
       white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
-    /* ── DELIVERY HELP SECTION ── */
+    /* ── DELIVERY HELP SECTION (Hidden by Default) ── */
     .help-section {
+      display: none;
       max-width: 920px;
-      margin: 2rem auto 3rem;
+      margin: 1rem auto 3rem;
       padding: 0 1.25rem;
+    }
+    .help-section.active {
+      display: block;
     }
     .help-card {
       background: #fff;
@@ -291,9 +315,9 @@
 
 <!-- ── OFFLINE STATE BANNER ── -->
 <div class="offline-banner" id="offline-banner">
-  <div class="offline-title">No delivery partners are available right now.</div>
+  <div class="offline-title">No delivery partners are available currently.</div>
   <div class="offline-sub">Need help? Submit a direct delivery request to Admin.</div>
-  <button class="offline-scroll-btn" onclick="scrollToHelpSection()">Submit Delivery Request</button>
+  <button class="offline-scroll-btn" onclick="revealAndScrollHelp()">Submit Delivery Request</button>
 </div>
 
 <div class="cards-wrap">
@@ -306,7 +330,7 @@
           <div class="avatar">🧑‍💻</div>
           <div>
             <div class="amigo-name" id="name-amigo1">Amigo</div>
-            <div class="amigo-phone-text" id="phone-display-amigo1">Phone: --</div>
+            <div class="amigo-phone-text" id="phone-display-amigo1">📞 +91 ----------</div>
             <span class="status-badge badge-on" id="badge-amigo1">Available</span>
           </div>
         </div>
@@ -342,7 +366,7 @@
           <div class="avatar">🧑‍🔧</div>
           <div>
             <div class="amigo-name" id="name-amigo2">Amigo</div>
-            <div class="amigo-phone-text" id="phone-display-amigo2">Phone: --</div>
+            <div class="amigo-phone-text" id="phone-display-amigo2">📞 +91 ----------</div>
             <span class="status-badge badge-on" id="badge-amigo2">Available</span>
           </div>
         </div>
@@ -372,6 +396,11 @@
 
 </div>
 
+<!-- ── BACKUP HELP TRIGGER BUTTON ── -->
+<div class="help-trigger-wrap">
+  <button class="help-trigger-btn" onclick="revealAndScrollHelp()">Can't reach an Amigo?</button>
+</div>
+
 <!-- ── IMPROVED DELIVERY REQUEST MODAL ── -->
 <div class="modal-overlay" id="delivery-modal" onclick="handleOverlayClick(event)">
   <div class="modal-box">
@@ -384,39 +413,33 @@
     <input class="modal-input" id="modal-user-phone" type="tel" placeholder="e.g. 98XXXXXXXX" autocomplete="off">
 
     <label class="modal-label" for="modal-pickup">Pickup Location</label>
-    <select class="modal-select" id="modal-pickup">
-      <option value="Main Gate">📍 Main Gate</option>
-      <option value="Food Street">🍽️ Food Street</option>
-      <option value="Supermart">🛒 Supermart</option>
-      <option value="Taaza Tiffins">🍳 Taaza Tiffins</option>
-      <option value="Other">📋 Other</option>
-    </select>
+    <input class="modal-input" id="modal-pickup" type="text" placeholder="e.g. Main Gate / Food Street" autocomplete="off">
 
     <label class="modal-label" for="modal-drop">Drop Location</label>
     <input class="modal-input" id="modal-drop" type="text" placeholder="e.g. Hall 4 Room 203" autocomplete="off">
 
     <label class="modal-label" for="modal-delivery-type">Delivery Type</label>
     <select class="modal-select" id="modal-delivery-type" onchange="toggleFoodTimeField()">
-      <option value="Food">🍔 Food</option>
-      <option value="Parcel">📦 Parcel</option>
-      <option value="Grocery">🛒 Grocery</option>
-      <option value="Documents">📄 Documents</option>
-      <option value="Other">📋 Other</option>
+      <option value="Food">Food</option>
+      <option value="Parcel">Parcel</option>
+      <option value="Grocery">Grocery</option>
+      <option value="Documents">Documents</option>
+      <option value="Other">Other</option>
     </select>
 
     <!-- Food Only Time Field -->
     <div id="food-time-container">
-      <label class="modal-label" for="modal-reach-time">By what time will you reach the pickup location?</label>
+      <label class="modal-label" for="modal-reach-time">When will you reach the pickup point?</label>
       <select class="modal-select" id="modal-reach-time">
-        <option value="5 min">⏱️ 5 min</option>
-        <option value="10 min" selected>⏱️ 10 min</option>
-        <option value="15 min">⏱️ 15 min</option>
-        <option value="20 min">⏱️ 20 min</option>
+        <option value="5 min">5 min</option>
+        <option value="10 min" selected>10 min</option>
+        <option value="15 min">15 min</option>
+        <option value="20 min">20 min</option>
       </select>
     </div>
 
     <label class="modal-label" for="modal-description">Item Description</label>
-    <input class="modal-input" id="modal-description" type="text" placeholder="e.g. 6 Domino's pizzas / Laptop charger" autocomplete="off">
+    <input class="modal-input" id="modal-description" type="text" placeholder="e.g. Pizza / Books" autocomplete="off">
 
     <label class="modal-label" for="modal-quantity">Quantity</label>
     <input class="modal-input" id="modal-quantity" type="number" min="1" value="1">
@@ -436,19 +459,19 @@
   </div>
 </div>
 
-<!-- ── DELIVERY HELP SECTION ── -->
+<!-- ── DELIVERY HELP SECTION (BACKUP ONLY) ── -->
 <div class="help-section" id="help-section">
   <div class="help-card">
     <div class="help-title">Need Delivery Help?</div>
-    <div class="help-desc">If no Amigo is available or no one is responding, submit your request below.</div>
+    <div class="help-desc">If no Amigo is available or no one is responding, submit your request directly to Admin.</div>
     
     <div class="help-form-grid">
       <div>
-        <label class="modal-label" for="help-name">Name</label>
+        <label class="modal-label" for="help-name">Customer Name</label>
         <input class="modal-input" id="help-name" type="text" placeholder="e.g. Rahul">
       </div>
       <div>
-        <label class="modal-label" for="help-phone">Phone</label>
+        <label class="modal-label" for="help-phone">Phone Number</label>
         <input class="modal-input" id="help-phone" type="tel" placeholder="e.g. 98XXXXXXXX">
       </div>
       <div>
@@ -470,7 +493,7 @@
         </select>
       </div>
       <div>
-        <label class="modal-label" for="help-desc">Description</label>
+        <label class="modal-label" for="help-desc">Item Description</label>
         <input class="modal-input" id="help-desc" type="text" placeholder="e.g. Urgent books / Food order">
       </div>
     </div>
@@ -533,6 +556,14 @@
     return 'Updated ' + Math.floor(d/3600) + 'h ago';
   }
 
+  function formatPhoneNumber(phone) {
+    if (!phone) return '📞 +91 ----------';
+    let clean = String(phone).replace(/\D/g, '');
+    if (clean.length === 10) return `📞 +91 ${clean}`;
+    if (clean.length === 12 && clean.startsWith('91')) return `📞 +${clean.slice(0,2)} ${clean.slice(2)}`;
+    return `📞 ${phone}`;
+  }
+
   /* ── Initialize Maps ── */
   ['amigo1','amigo2'].forEach(id => {
     maps[id] = L.map('map-'+id, {
@@ -543,14 +574,17 @@
     prevLoc[id] = DEFAULT_LOC;
   });
 
-  /* ── Check both Amigos availability for Offline State ── */
+  /* ── Check both Amigos availability for Offline State & Help Section ── */
   function checkOverallAvailability() {
     const a1Active = amigoCache.amigo1 && amigoCache.amigo1.status === 'active';
     const a2Active = amigoCache.amigo2 && amigoCache.amigo2.status === 'active';
     
     const banner = document.getElementById('offline-banner');
+    const helpSec = document.getElementById('help-section');
+    
     if (!a1Active && !a2Active) {
       banner.classList.add('active');
+      helpSec.classList.add('active');
     } else {
       banner.classList.remove('active');
     }
@@ -568,7 +602,7 @@
     // Update Name & Phone Display
     document.getElementById('name-'+id).textContent = name;
     document.getElementById('maplabel-'+id).textContent = name;
-    document.getElementById('phone-display-amigo1').textContent = rawPhone ? `Phone: ${rawPhone}` : 'Phone: N/A';
+    document.getElementById('phone-display-'+id).textContent = formatPhoneNumber(rawPhone);
 
     // Status Badge
     const badge = document.getElementById('badge-'+id);
@@ -643,7 +677,7 @@
     activeModalAmigo = amigoId;
     document.getElementById('modal-user-name').value = '';
     document.getElementById('modal-user-phone').value = '';
-    document.getElementById('modal-pickup').value = 'Main Gate';
+    document.getElementById('modal-pickup').value = '';
     document.getElementById('modal-drop').value = '';
     document.getElementById('modal-delivery-type').value = 'Food';
     document.getElementById('modal-description').value = '';
@@ -680,7 +714,7 @@
   window.sendRequest = function() {
     const userName = document.getElementById('modal-user-name').value.trim();
     const userPhone = document.getElementById('modal-user-phone').value.trim();
-    const pickup = document.getElementById('modal-pickup').value;
+    const pickup = document.getElementById('modal-pickup').value.trim();
     const drop = document.getElementById('modal-drop').value.trim();
     const deliveryType = document.getElementById('modal-delivery-type').value;
     const reachTime = document.getElementById('modal-reach-time').value;
@@ -702,17 +736,17 @@
 
     // Build Formatted Message
     let msgText = `Campus Delivery Request\n\n`;
-    msgText += `Customer:\n${userName}\n\n`;
-    msgText += `Phone:\n${userPhone || 'N/A'}\n\n`;
-    msgText += `Pickup:\n${pickup}\n\n`;
-    msgText += `Drop:\n${drop}\n\n`;
-    msgText += `Delivery Type:\n${deliveryType}\n\n`;
-    msgText += `Items:\n${description || 'N/A'}\n\n`;
-    msgText += `Quantity:\n${quantity}\n\n`;
-    msgText += `Approx Size:\n${size}\n`;
+    msgText += `Customer: ${userName}\n`;
+    msgText += `Phone: ${userPhone || 'N/A'}\n`;
+    msgText += `Pickup: ${pickup || 'N/A'}\n`;
+    msgText += `Drop: ${drop}\n`;
+    msgText += `Delivery Type: ${deliveryType}\n`;
+    msgText += `Items: ${description || 'N/A'}\n`;
+    msgText += `Quantity: ${quantity}\n`;
+    msgText += `Approx Size: ${size}\n`;
 
     if (deliveryType === 'Food') {
-      msgText += `\nCustomer reaches gate in:\n${reachTime}\n`;
+      msgText += `Arrival Time: ${reachTime}\n`;
     }
 
     trackEvent('whatsapp_button_click', { driver: activeModalAmigo });
@@ -722,7 +756,13 @@
     closeModal();
   };
 
-  /* ── Submit Delivery Help Form to Admin ── */
+  /* ── Help Section Actions ── */
+  window.revealAndScrollHelp = function() {
+    const helpSec = document.getElementById('help-section');
+    helpSec.classList.add('active');
+    helpSec.scrollIntoView({ behavior: 'smooth' });
+  };
+
   window.submitHelpRequest = function() {
     const name = document.getElementById('help-name').value.trim();
     const phone = document.getElementById('help-phone').value.trim();
@@ -731,27 +771,23 @@
     const type = document.getElementById('help-type').value;
     const desc = document.getElementById('help-desc').value.trim();
 
-    if (!name || !pickup || !drop) {
-      alert('Please fill out Name, Pickup, and Drop locations.');
+    if (!name || !drop) {
+      alert('Please fill out Customer Name and Drop Location.');
       return;
     }
 
     let msgText = `Campus Delivery Admin Help Request\n\n`;
-    msgText += `Customer:\n${name}\n\n`;
-    msgText += `Phone:\n${phone || 'N/A'}\n\n`;
-    msgText += `Pickup:\n${pickup}\n\n`;
-    msgText += `Drop:\n${drop}\n\n`;
-    msgText += `Delivery Type:\n${type}\n\n`;
-    msgText += `Description:\n${desc || 'N/A'}\n`;
+    msgText += `Customer: ${name}\n`;
+    msgText += `Phone: ${phone || 'N/A'}\n`;
+    msgText += `Pickup: ${pickup || 'N/A'}\n`;
+    msgText += `Drop: ${drop}\n`;
+    msgText += `Delivery Type: ${type}\n`;
+    msgText += `Items: ${desc || 'N/A'}\n`;
 
     trackEvent('help_request_submitted', { delivery_type: type });
 
     const cleanAdminPhone = String(ADMIN_PHONE).replace(/\D/g,'');
     window.open('https://wa.me/' + cleanAdminPhone + '?text=' + encodeURIComponent(msgText), '_blank');
-  };
-
-  window.scrollToHelpSection = function() {
-    document.getElementById('help-section').scrollIntoView({ behavior: 'smooth' });
   };
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
