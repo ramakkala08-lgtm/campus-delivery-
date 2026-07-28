@@ -409,16 +409,11 @@
     <label class="modal-label" for="modal-user-name">Customer Name</label>
     <input class="modal-input" id="modal-user-name" type="text" placeholder="e.g. Rahul" autocomplete="off">
 
+    <label class="modal-label" for="modal-user-phone">Phone Number</label>
+    <input class="modal-input" id="modal-user-phone" type="tel" placeholder="e.g. 98XXXXXXXX" autocomplete="off">
 
-
-    <label class="modal-label" for="platform">Delivery Type</label>
-        <select class="modal-select" id="help-type">
-          <option value="flipkart">flipkart</option>
-          <option value="amazon">amazon</option>
-          <option value="super market nit-w">super market nit-w</option>
-          <option value="foodstreet">foodstreet</option>
-          <option value="Other">Other</option>
-        </select>
+    <label class="modal-label" for="modal-pickup">Pickup Location</label>
+    <input class="modal-input" id="modal-pickup" type="text" placeholder="e.g. Main Gate / Food Street" autocomplete="off">
 
     <label class="modal-label" for="modal-drop">Drop Location</label>
     <input class="modal-input" id="modal-drop" type="text" placeholder="e.g. Hall 4 Room 203" autocomplete="off">
@@ -475,21 +470,28 @@
         <label class="modal-label" for="help-name">Customer Name</label>
         <input class="modal-input" id="help-name" type="text" placeholder="e.g. Rahul">
       </div>
-        <div>
-        <label class="modal-label" for="platform">Delivery Type</label>
-        <select class="modal-select" id="help-type">
-          <option value="flipkart">flipkart</option>
-          <option value="amazon">amazon</option>
-          <option value="super market nit-w">super market nit-w</option>
-          <option value="foodstreet">foodstreet</option>
-          <option value="Other">Other</option>
-        </select>
-   
+      <div>
+        <label class="modal-label" for="help-phone">Phone Number</label>
+        <input class="modal-input" id="help-phone" type="tel" placeholder="e.g. 98XXXXXXXX">
+      </div>
+      <div>
+        <label class="modal-label" for="help-pickup">Pickup Location</label>
+        <input class="modal-input" id="help-pickup" type="text" placeholder="e.g. Main Gate / Food Street">
+      </div>
       <div>
         <label class="modal-label" for="help-drop">Drop Location</label>
         <input class="modal-input" id="help-drop" type="text" placeholder="e.g. Hall 4 Room 203">
       </div>
-    
+      <div>
+        <label class="modal-label" for="help-type">Delivery Type</label>
+        <select class="modal-select" id="help-type">
+          <option value="Food">Food</option>
+          <option value="Parcel">Parcel</option>
+          <option value="Grocery">Grocery</option>
+          <option value="Documents">Documents</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
       <div>
         <label class="modal-label" for="help-desc">Item Description</label>
         <input class="modal-input" id="help-desc" type="text" placeholder="e.g. Urgent books / Food order">
