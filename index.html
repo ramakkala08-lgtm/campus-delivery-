@@ -65,6 +65,9 @@
       font-size: 1.5rem; flex-shrink: 0;
     }
     .amigo-name { font-size: 1.05rem; font-weight: 800; }
+    .driver-phone {
+      font-size: 0.82rem; font-weight: 600; color: #555; margin-top: 2px;
+    }
     .status-badge {
       font-size: 0.68rem; font-weight: 700;
       padding: 0.22rem 0.65rem; border-radius: 999px;
@@ -80,13 +83,26 @@
       color: #fff; font-weight: 700; font-size: 0.9rem;
       cursor: pointer; text-decoration: none;
       transition: opacity 0.2s, transform 0.15s;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
       box-shadow: 0 4px 12px rgba(37,211,102,0.25);
     }
     .req-btn:hover { opacity: 0.92; transform: scale(1.02); }
     .req-btn:active { transform: scale(0.97); }
     .req-btn.disabled { background: #d1d5db; box-shadow: none; pointer-events: none; cursor: not-allowed; }
     .wa-icon { width: 1.1em; height: 1.1em; }
+
+    .call-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      width: 100%; padding: 0.75rem; border-radius: 12px;
+      border: 1.5px solid #e0e3ef; background: #fff;
+      color: #1a1a2e; font-weight: 700; font-size: 0.88rem;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, transform 0.15s, border-color 0.2s;
+      margin-bottom: 0.75rem;
+    }
+    .call-btn:hover { background: #f7f8fc; border-color: #cbd5e1; transform: scale(1.01); }
+    .call-btn:active { transform: scale(0.97); }
+    .call-btn.disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
 
     /* ── REQUEST DELIVERY MODAL ── */
     .modal-overlay {
@@ -212,7 +228,8 @@
         <div class="identity">
           <div class="avatar">🧑‍💻</div>
           <div>
-            <div class="amigo-name" id="name-amigo1">Driver 1</div>
+            <div class="amigo-name" id="name-amigo1">Amigo</div>
+            <div class="driver-phone" id="phone-amigo1">📞 --</div>
             <span class="status-badge badge-on" id="badge-amigo1">Available</span>
           </div>
         </div>
@@ -221,11 +238,14 @@
         <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
         Request Delivery
       </button>
+      <a class="call-btn disabled" id="call-amigo1" href="javascript:void(0);">
+        📞 Call Amigo
+      </a>
     </div>
     <div class="map-section">
       <div class="map-el" id="map-amigo1"></div>
       <div class="map-overlay-label">
-        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo1">Driver 1</span>
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo1">Amigo</span>
       </div>
       <div class="gps-badge gps-off" id="gpsbadge-amigo1">GPS Off</div>
     </div>
@@ -239,7 +259,8 @@
         <div class="identity">
           <div class="avatar">🧑‍🔧</div>
           <div>
-            <div class="amigo-name" id="name-amigo2">Driver 2</div>
+            <div class="amigo-name" id="name-amigo2">Amigo</div>
+            <div class="driver-phone" id="phone-amigo2">📞 --</div>
             <span class="status-badge badge-on" id="badge-amigo2">Available</span>
           </div>
         </div>
@@ -248,11 +269,14 @@
         <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
         Request Delivery
       </button>
+      <a class="call-btn disabled" id="call-amigo2" href="javascript:void(0);">
+        📞 Call Amigo
+      </a>
     </div>
     <div class="map-section">
       <div class="map-el" id="map-amigo2"></div>
       <div class="map-overlay-label">
-        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo2">Driver 2</span>
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo2">Amigo</span>
       </div>
       <div class="gps-badge gps-off" id="gpsbadge-amigo2">GPS Off</div>
     </div>
@@ -276,14 +300,16 @@
       <option value="Amazon">📦 Amazon</option>
       <option value="Flipkart">🛍️ Flipkart</option>
       <option value="Blinkit">⚡ Blinkit</option>
-       <!-- NEW -->
-    <option value="Supermart NITW">🛒 Supermart NITW</option>
-    <option value="Food Street">🍽️ Food Street</option>
+      <option value="Supermart NITW">🛒 Supermart NITW</option>
+      <option value="Food Street">🍽️ Food Street</option>
       <option value="Other">📋 Other</option>
     </select>
 
+    <label class="modal-label" for="modal-item-desc">Item Description</label>
+    <input class="modal-input" id="modal-item-desc" type="text" placeholder="3 Domino's pizzas / Amazon parcel / Laptop charger" autocomplete="off">
+
     <label class="modal-label" for="modal-hostel">Hostel / Destination</label>
-    <input class="modal-input" id="modal-hostel" type="text" placeholder="e.g. Block A, Room 302" autocomplete="off">
+    <input class="modal-input" id="modal-hostel" type="text" placeholder="e.g. Hall 4 Room 203" autocomplete="off">
 
     <button class="modal-wa-btn" id="modal-send-btn" onclick="sendRequest()">
       <svg style="width:1.15em;height:1.15em" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -317,10 +343,10 @@
 
   const DEFAULT_LOC = [17.9837, 79.5300];
 
-  /* ── Shared amigo data cache (for modal WhatsApp) ── */
+  /* ── Shared amigo data cache (for modal WhatsApp & Call) ── */
   const amigoCache = {
-    amigo1: { name:'Driver 1', phone:'', status:'active', location:null, isTracking:false },
-    amigo2: { name:'Driver 2', phone:'', status:'active', location:null, isTracking:false }
+    amigo1: { name:'Amigo', phone:'', status:'active', location:null, isTracking:false },
+    amigo2: { name:'Amigo', phone:'', status:'active', location:null, isTracking:false }
   };
 
   /* ── Map + marker state ── */
@@ -350,7 +376,7 @@
       zoomControl: true, attributionControl: false, scrollWheelZoom: false
     }).setView(DEFAULT_LOC, 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(maps[id]);
-    markers[id] = L.marker(DEFAULT_LOC, { icon: makeIcon(id==='amigo1'?'Driver 1':'Driver 2') }).addTo(maps[id]);
+    markers[id] = L.marker(DEFAULT_LOC, { icon: makeIcon(id==='amigo1'?'Amigo':'Amigo') }).addTo(maps[id]);
     prevLoc[id] = DEFAULT_LOC;
   });
 
@@ -361,11 +387,13 @@
 
     const isActive = data.status === 'active';
     const loc = (data.location && data.location.length === 2) ? data.location : DEFAULT_LOC;
-    const name = data.name || id;
+    const name = data.name || 'Amigo';
+    const phone = data.phone || '';
 
-    // Name
-    document.getElementById('name-'+id).textContent    = name;
+    // Name & Phone Number
+    document.getElementById('name-'+id).textContent = name;
     document.getElementById('maplabel-'+id).textContent = name;
+    document.getElementById('phone-'+id).textContent = phone ? `📞 ${phone}` : '📞 --';
 
     // Status badge
     const badge = document.getElementById('badge-'+id);
@@ -377,10 +405,21 @@
 
     // WhatsApp button — enable only if active AND has a phone number
     const btn = document.getElementById('btn-'+id);
-    if (isActive && data.phone) {
+    if (isActive && phone) {
       btn.classList.remove('disabled');
     } else {
       btn.classList.add('disabled');
+    }
+
+    // Call button — enable only if active AND has a phone number
+    const callBtn = document.getElementById('call-'+id);
+    const rawPhone = String(phone).replace(/\D/g,'');
+    if (isActive && rawPhone) {
+      callBtn.href = 'tel:' + rawPhone;
+      callBtn.classList.remove('disabled');
+    } else {
+      callBtn.href = 'javascript:void(0);';
+      callBtn.classList.add('disabled');
     }
 
     // GPS badge
@@ -416,8 +455,7 @@
   });
 
   /* ─────────────────────────────────────────
-     MODAL LOGIC (unchanged, but phone comes
-     from Firestore cache, not localStorage)
+     MODAL LOGIC
   ───────────────────────────────────────── */
   let activeModalAmigo = null;
 
@@ -427,7 +465,14 @@
     activeModalAmigo = amigoId;
     document.getElementById('modal-user-name').value = '';
     document.getElementById('modal-platform').value  = 'Zomato';
-    document.getElementById('modal-hostel').value     = '';
+    document.getElementById('modal-item-desc').value = '';
+    document.getElementById('modal-hostel').value    = '';
+    
+    // Reset any validation styles
+    document.getElementById('modal-user-name').style.borderColor = '';
+    document.getElementById('modal-hostel').style.borderColor = '';
+    document.getElementById('modal-item-desc').style.borderColor = '';
+
     document.getElementById('delivery-modal').classList.add('open');
     setTimeout(() => document.getElementById('modal-user-name').focus(), 120);
   };
@@ -444,10 +489,17 @@
   window.sendRequest = function() {
     const userName = document.getElementById('modal-user-name').value.trim();
     const platform = document.getElementById('modal-platform').value;
+    const itemDesc = document.getElementById('modal-item-desc').value.trim();
     const hostel   = document.getElementById('modal-hostel').value.trim();
+
     if (!userName) {
       document.getElementById('modal-user-name').focus();
       document.getElementById('modal-user-name').style.borderColor = '#ef4444';
+      return;
+    }
+    if (!itemDesc) {
+      document.getElementById('modal-item-desc').focus();
+      document.getElementById('modal-item-desc').style.borderColor = '#ef4444';
       return;
     }
     if (!hostel) {
@@ -455,9 +507,13 @@
       document.getElementById('modal-hostel').style.borderColor = '#ef4444';
       return;
     }
+
     const a     = amigoCache[activeModalAmigo];
     const phone = String(a.phone).replace(/\D/g,'');
-    const msg   = `Hey Amigo! I need a campus delivery%0A%0A👤 *Name:* ${encodeURIComponent(userName)}%0A📦 *Platform:* ${encodeURIComponent(platform)}%0A📍 *Deliver to:* ${encodeURIComponent(hostel)}`;
+    
+    // Updated WhatsApp message structure
+    const msg = `Campus Delivery Request%0A%0ACustomer:%0A${encodeURIComponent(userName)}%0A%0APlatform:%0A${encodeURIComponent(platform)}%0A%0AItem Description:%0A${encodeURIComponent(itemDesc)}%0A%0ADestination:%0A${encodeURIComponent(hostel)}`;
+    
     window.open('https://wa.me/' + phone + '?text=' + msg, '_blank');
     closeModal();
   };
