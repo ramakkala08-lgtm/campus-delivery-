@@ -4,8 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Campus Delivery</title>
+
+  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Google Analytics 4 Script Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+
+    // Reusable Event Tracking Function
+    function trackEvent(name, parameters = {}) {
+      if (typeof gtag === 'function') {
+        gtag('event', name, parameters);
+      }
+    }
+
+    // Track Initial Page View Event
+    trackEvent('page_view', { page_title: 'Campus Delivery Home' });
+  </script>
+
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -37,6 +59,32 @@
     .hero { text-align: center; padding: 2rem 1.5rem 1rem; }
     .hero h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.3rem; }
     .hero p { font-size: 0.88rem; color: #777; }
+    
+    /* ── OFFLINE BANNER STYLING ── */
+    .offline-banner {
+      display: none;
+      background: #fff;
+      border: 1px solid #fee2e2;
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin: 0 auto 1.5rem;
+      max-width: 920px;
+      width: calc(100% - 2.5rem);
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+    }
+    .offline-banner.active { display: block; }
+    .offline-title { font-size: 1rem; font-weight: 800; color: #991b1b; margin-bottom: 0.3rem; }
+    .offline-sub { font-size: 0.85rem; color: #666; margin-bottom: 0.8rem; }
+    .offline-scroll-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #4f46e5; color: #fff; border: none;
+      padding: 0.6rem 1.2rem; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .offline-scroll-btn:hover { background: #4338ca; transform: scale(1.02); }
+
     .cards-wrap {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -65,6 +113,7 @@
       font-size: 1.5rem; flex-shrink: 0;
     }
     .amigo-name { font-size: 1.05rem; font-weight: 800; }
+    .amigo-phone-text { font-size: 0.8rem; font-weight: 600; color: #666; margin-top: 1px; }
     .status-badge {
       font-size: 0.68rem; font-weight: 700;
       padding: 0.22rem 0.65rem; border-radius: 999px;
@@ -73,6 +122,9 @@
     }
     .badge-on  { background: #d1fae5; color: #065f46; }
     .badge-off { background: #fee2e2; color: #991b1b; }
+    
+    .btn-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    
     .req-btn {
       display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       width: 100%; padding: 0.85rem; border-radius: 12px; border: none;
@@ -80,12 +132,23 @@
       color: #fff; font-weight: 700; font-size: 0.9rem;
       cursor: pointer; text-decoration: none;
       transition: opacity 0.2s, transform 0.15s;
-      margin-bottom: 0.75rem;
       box-shadow: 0 4px 12px rgba(37,211,102,0.25);
     }
     .req-btn:hover { opacity: 0.92; transform: scale(1.02); }
     .req-btn:active { transform: scale(0.97); }
     .req-btn.disabled { background: #d1d5db; box-shadow: none; pointer-events: none; cursor: not-allowed; }
+    
+    .call-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      width: 100%; padding: 0.75rem; border-radius: 12px;
+      border: 1.5px solid #4f46e5; background: #eef2ff;
+      color: #4f46e5; font-weight: 700; font-size: 0.88rem;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .call-btn:hover { background: #e0e7ff; transform: scale(1.01); }
+    .call-btn.disabled { border-color: #cbd5e1; background: #f1f5f9; color: #94a3b8; pointer-events: none; cursor: not-allowed; }
+
     .wa-icon { width: 1.1em; height: 1.1em; }
 
     /* ── REQUEST DELIVERY MODAL ── */
@@ -101,7 +164,8 @@
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal-box {
       background: #fff; border-radius: 22px;
-      width: 100%; max-width: 420px;
+      width: 100%; max-width: 440px;
+      max-height: 90vh; overflow-y: auto;
       padding: 1.8rem 1.6rem 1.4rem;
       box-shadow: 0 24px 64px rgba(0,0,0,0.22);
       transform: translateY(24px) scale(0.97);
@@ -149,6 +213,7 @@
       transition: color 0.15s;
     }
     .modal-cancel:hover { color: #ef4444; }
+
     /* MAP SECTION */
     .map-section { position: relative; height: 270px; border-top: 1px solid #f0f0f0; }
     .map-el { height: 100%; width: 100%; }
@@ -188,6 +253,27 @@
       border-bottom: 2px solid #4f46e5;
       white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
+
+    /* ── DELIVERY HELP SECTION ── */
+    .help-section {
+      max-width: 920px;
+      margin: 2rem auto 3rem;
+      padding: 0 1.25rem;
+    }
+    .help-card {
+      background: #fff;
+      border-radius: 20px;
+      border: 1px solid #e8eaf0;
+      padding: 1.8rem 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .help-title { font-size: 1.3rem; font-weight: 800; color: #1a1a2e; margin-bottom: 0.4rem; }
+    .help-desc { font-size: 0.88rem; color: #666; margin-bottom: 1.3rem; }
+    .help-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0.2rem 1.2rem;
+    }
   </style>
 </head>
 <body>
@@ -200,7 +286,14 @@
 
 <div class="hero">
   <h1>Request a Campus Delivery 📦</h1>
-  <p>Pick an available amigo — tap WhatsApp to send your request</p>
+  <p>Pick an available Amigo — tap WhatsApp or Call to send your request</p>
+</div>
+
+<!-- ── OFFLINE STATE BANNER ── -->
+<div class="offline-banner" id="offline-banner">
+  <div class="offline-title">No delivery partners are available right now.</div>
+  <div class="offline-sub">Need help? Submit a direct delivery request to Admin.</div>
+  <button class="offline-scroll-btn" onclick="scrollToHelpSection()">Submit Delivery Request</button>
 </div>
 
 <div class="cards-wrap">
@@ -212,20 +305,29 @@
         <div class="identity">
           <div class="avatar">🧑‍💻</div>
           <div>
-            <div class="amigo-name" id="name-amigo1">Driver 1</div>
+            <div class="amigo-name" id="name-amigo1">Amigo</div>
+            <div class="amigo-phone-text" id="phone-display-amigo1">Phone: --</div>
             <span class="status-badge badge-on" id="badge-amigo1">Available</span>
           </div>
         </div>
       </div>
-      <button class="req-btn" id="btn-amigo1" onclick="openModal('amigo1')">
-        <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-        Request Delivery
-      </button>
+
+      <div class="btn-group">
+        <!-- WhatsApp Request Button -->
+        <button class="req-btn" id="btn-amigo1" onclick="openModal('amigo1')">
+          <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          Request Delivery
+        </button>
+        <!-- Call Button -->
+        <a class="call-btn disabled" id="call-amigo1" href="#" onclick="trackEvent('call_button_click', { driver: 'amigo1' })">
+          📞 Call Amigo
+        </a>
+      </div>
     </div>
     <div class="map-section">
       <div class="map-el" id="map-amigo1"></div>
       <div class="map-overlay-label">
-        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo1">Driver 1</span>
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo1">Amigo</span>
       </div>
       <div class="gps-badge gps-off" id="gpsbadge-amigo1">GPS Off</div>
     </div>
@@ -239,20 +341,29 @@
         <div class="identity">
           <div class="avatar">🧑‍🔧</div>
           <div>
-            <div class="amigo-name" id="name-amigo2">Driver 2</div>
+            <div class="amigo-name" id="name-amigo2">Amigo</div>
+            <div class="amigo-phone-text" id="phone-display-amigo2">Phone: --</div>
             <span class="status-badge badge-on" id="badge-amigo2">Available</span>
           </div>
         </div>
       </div>
-      <button class="req-btn" id="btn-amigo2" onclick="openModal('amigo2')">
-        <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-        Request Delivery
-      </button>
+
+      <div class="btn-group">
+        <!-- WhatsApp Request Button -->
+        <button class="req-btn" id="btn-amigo2" onclick="openModal('amigo2')">
+          <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          Request Delivery
+        </button>
+        <!-- Call Button -->
+        <a class="call-btn disabled" id="call-amigo2" href="#" onclick="trackEvent('call_button_click', { driver: 'amigo2' })">
+          📞 Call Amigo
+        </a>
+      </div>
     </div>
     <div class="map-section">
       <div class="map-el" id="map-amigo2"></div>
       <div class="map-overlay-label">
-        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo2">Driver 2</span>
+        <span class="blink-dot"></span> LIVE &nbsp;<span id="maplabel-amigo2">Amigo</span>
       </div>
       <div class="gps-badge gps-off" id="gpsbadge-amigo2">GPS Off</div>
     </div>
@@ -261,29 +372,61 @@
 
 </div>
 
-<!-- ── REQUEST DELIVERY MODAL ── -->
+<!-- ── IMPROVED DELIVERY REQUEST MODAL ── -->
 <div class="modal-overlay" id="delivery-modal" onclick="handleOverlayClick(event)">
   <div class="modal-box">
     <div class="modal-title">Request Delivery</div>
 
-    <label class="modal-label" for="modal-user-name">Your Name</label>
+    <label class="modal-label" for="modal-user-name">Customer Name</label>
     <input class="modal-input" id="modal-user-name" type="text" placeholder="e.g. Rahul" autocomplete="off">
 
-    <label class="modal-label" for="modal-platform">Delivery Platform</label>
-    <select class="modal-select" id="modal-platform">
-      <option value="Zomato">🍕 Zomato</option>
-      <option value="Swiggy">🧡 Swiggy</option>
-      <option value="Amazon">📦 Amazon</option>
-      <option value="Flipkart">🛍️ Flipkart</option>
-      <option value="Blinkit">⚡ Blinkit</option>
-       <!-- NEW -->
-    <option value="Supermart NITW">🛒 Supermart NITW</option>
-    <option value="Food Street">🍽️ Food Street</option>
+    <label class="modal-label" for="modal-user-phone">Phone Number</label>
+    <input class="modal-input" id="modal-user-phone" type="tel" placeholder="e.g. 98XXXXXXXX" autocomplete="off">
+
+    <label class="modal-label" for="modal-pickup">Pickup Location</label>
+    <select class="modal-select" id="modal-pickup">
+      <option value="Main Gate">📍 Main Gate</option>
+      <option value="Food Street">🍽️ Food Street</option>
+      <option value="Supermart">🛒 Supermart</option>
+      <option value="Taaza Tiffins">🍳 Taaza Tiffins</option>
       <option value="Other">📋 Other</option>
     </select>
 
-    <label class="modal-label" for="modal-hostel">Hostel / Destination</label>
-    <input class="modal-input" id="modal-hostel" type="text" placeholder="e.g. Block A, Room 302" autocomplete="off">
+    <label class="modal-label" for="modal-drop">Drop Location</label>
+    <input class="modal-input" id="modal-drop" type="text" placeholder="e.g. Hall 4 Room 203" autocomplete="off">
+
+    <label class="modal-label" for="modal-delivery-type">Delivery Type</label>
+    <select class="modal-select" id="modal-delivery-type" onchange="toggleFoodTimeField()">
+      <option value="Food">🍔 Food</option>
+      <option value="Parcel">📦 Parcel</option>
+      <option value="Grocery">🛒 Grocery</option>
+      <option value="Documents">📄 Documents</option>
+      <option value="Other">📋 Other</option>
+    </select>
+
+    <!-- Food Only Time Field -->
+    <div id="food-time-container">
+      <label class="modal-label" for="modal-reach-time">By what time will you reach the pickup location?</label>
+      <select class="modal-select" id="modal-reach-time">
+        <option value="5 min">⏱️ 5 min</option>
+        <option value="10 min" selected>⏱️ 10 min</option>
+        <option value="15 min">⏱️ 15 min</option>
+        <option value="20 min">⏱️ 20 min</option>
+      </select>
+    </div>
+
+    <label class="modal-label" for="modal-description">Item Description</label>
+    <input class="modal-input" id="modal-description" type="text" placeholder="e.g. 6 Domino's pizzas / Laptop charger" autocomplete="off">
+
+    <label class="modal-label" for="modal-quantity">Quantity</label>
+    <input class="modal-input" id="modal-quantity" type="number" min="1" value="1">
+
+    <label class="modal-label" for="modal-size">Approximate Size</label>
+    <select class="modal-select" id="modal-size">
+      <option value="Small">Small</option>
+      <option value="Medium" selected>Medium</option>
+      <option value="Large">Large</option>
+    </select>
 
     <button class="modal-wa-btn" id="modal-send-btn" onclick="sendRequest()">
       <svg style="width:1.15em;height:1.15em" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
@@ -293,14 +436,59 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     FIREBASE CONFIG — paste YOUR config values below
-     Get them from: Firebase Console → Project Settings → Your Apps
-     ═══════════════════════════════════════════════════════════════ -->
+<!-- ── DELIVERY HELP SECTION ── -->
+<div class="help-section" id="help-section">
+  <div class="help-card">
+    <div class="help-title">Need Delivery Help?</div>
+    <div class="help-desc">If no Amigo is available or no one is responding, submit your request below.</div>
+    
+    <div class="help-form-grid">
+      <div>
+        <label class="modal-label" for="help-name">Name</label>
+        <input class="modal-input" id="help-name" type="text" placeholder="e.g. Rahul">
+      </div>
+      <div>
+        <label class="modal-label" for="help-phone">Phone</label>
+        <input class="modal-input" id="help-phone" type="tel" placeholder="e.g. 98XXXXXXXX">
+      </div>
+      <div>
+        <label class="modal-label" for="help-pickup">Pickup Location</label>
+        <input class="modal-input" id="help-pickup" type="text" placeholder="e.g. Main Gate / Food Street">
+      </div>
+      <div>
+        <label class="modal-label" for="help-drop">Drop Location</label>
+        <input class="modal-input" id="help-drop" type="text" placeholder="e.g. Hall 4 Room 203">
+      </div>
+      <div>
+        <label class="modal-label" for="help-type">Delivery Type</label>
+        <select class="modal-select" id="help-type">
+          <option value="Food">Food</option>
+          <option value="Parcel">Parcel</option>
+          <option value="Grocery">Grocery</option>
+          <option value="Documents">Documents</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label" for="help-desc">Description</label>
+        <input class="modal-input" id="help-desc" type="text" placeholder="e.g. Urgent books / Food order">
+      </div>
+    </div>
+
+    <button class="modal-wa-btn" style="margin-top:0.8rem;" onclick="submitHelpRequest()">
+      Submit Request to Admin
+    </button>
+  </div>
+</div>
+
+<!-- ── FIREBASE MODULE SCRIPT ── -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── ADMIN PHONE CONFIG ──
+  const ADMIN_PHONE = "91XXXXXXXXXX";
 
   // ── FIREBASE CONFIG ──
   const firebaseConfig = {
@@ -317,16 +505,16 @@
 
   const DEFAULT_LOC = [17.9837, 79.5300];
 
-  /* ── Shared amigo data cache (for modal WhatsApp) ── */
+  /* ── Shared Amigo Data Cache ── */
   const amigoCache = {
-    amigo1: { name:'Driver 1', phone:'', status:'active', location:null, isTracking:false },
-    amigo2: { name:'Driver 2', phone:'', status:'active', location:null, isTracking:false }
+    amigo1: { name:'Amigo 1', phone:'', status:'active', location:null, isTracking:false },
+    amigo2: { name:'Amigo 2', phone:'', status:'active', location:null, isTracking:false }
   };
 
-  /* ── Map + marker state ── */
+  /* ── Map + Marker State ── */
   const maps={}, markers={}, prevLoc={};
 
-  /* ── Helpers ── */
+  /* ── Helper Functions ── */
   function makeIcon(name) {
     return L.divIcon({
       className: '',
@@ -334,6 +522,7 @@
       iconSize: [120,38], iconAnchor:[60,7]
     });
   }
+
   function timeAgo(ts) {
     if (!ts) return 'Not updated yet';
     const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -344,54 +533,79 @@
     return 'Updated ' + Math.floor(d/3600) + 'h ago';
   }
 
-  /* ── Init maps ── */
+  /* ── Initialize Maps ── */
   ['amigo1','amigo2'].forEach(id => {
     maps[id] = L.map('map-'+id, {
       zoomControl: true, attributionControl: false, scrollWheelZoom: false
     }).setView(DEFAULT_LOC, 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(maps[id]);
-    markers[id] = L.marker(DEFAULT_LOC, { icon: makeIcon(id==='amigo1'?'Driver 1':'Driver 2') }).addTo(maps[id]);
+    markers[id] = L.marker(DEFAULT_LOC, { icon: makeIcon(id==='amigo1'?'Amigo 1':'Amigo 2') }).addTo(maps[id]);
     prevLoc[id] = DEFAULT_LOC;
   });
 
-  /* ── Update UI for one amigo from Firestore snapshot ── */
+  /* ── Check both Amigos availability for Offline State ── */
+  function checkOverallAvailability() {
+    const a1Active = amigoCache.amigo1 && amigoCache.amigo1.status === 'active';
+    const a2Active = amigoCache.amigo2 && amigoCache.amigo2.status === 'active';
+    
+    const banner = document.getElementById('offline-banner');
+    if (!a1Active && !a2Active) {
+      banner.classList.add('active');
+    } else {
+      banner.classList.remove('active');
+    }
+  }
+
+  /* ── Update UI for one Amigo from Firestore Snapshot ── */
   function applySnapshot(id, data) {
-    // Merge into cache
     amigoCache[id] = { ...amigoCache[id], ...data };
 
     const isActive = data.status === 'active';
     const loc = (data.location && data.location.length === 2) ? data.location : DEFAULT_LOC;
     const name = data.name || id;
+    const rawPhone = data.phone || '';
 
-    // Name
-    document.getElementById('name-'+id).textContent    = name;
+    // Update Name & Phone Display
+    document.getElementById('name-'+id).textContent = name;
     document.getElementById('maplabel-'+id).textContent = name;
+    document.getElementById('phone-display-amigo1').textContent = rawPhone ? `Phone: ${rawPhone}` : 'Phone: N/A';
 
-    // Status badge
+    // Status Badge
     const badge = document.getElementById('badge-'+id);
     badge.textContent = isActive ? 'Available' : 'Unavailable';
     badge.className   = 'status-badge ' + (isActive ? 'badge-on' : 'badge-off');
 
-    // Card dim
+    // Card Dimming
     document.getElementById('card-'+id).classList.toggle('unavailable', !isActive);
 
-    // WhatsApp button — enable only if active AND has a phone number
+    // WhatsApp Button State
     const btn = document.getElementById('btn-'+id);
-    if (isActive && data.phone) {
+    if (isActive && rawPhone) {
       btn.classList.remove('disabled');
     } else {
       btn.classList.add('disabled');
     }
 
-    // GPS badge
+    // Call Button Setup
+    const callBtn = document.getElementById('call-'+id);
+    if (rawPhone) {
+      const cleanPhone = String(rawPhone).replace(/\D/g,'');
+      callBtn.href = `tel:${cleanPhone}`;
+      callBtn.classList.remove('disabled');
+    } else {
+      callBtn.href = '#';
+      callBtn.classList.add('disabled');
+    }
+
+    // GPS Status Badge
     const pill = document.getElementById('gpsbadge-'+id);
     if (data.isTracking) { pill.textContent='GPS Live'; pill.className='gps-badge gps-on'; }
     else                  { pill.textContent='GPS Off';  pill.className='gps-badge gps-off'; }
 
-    // "Updated X ago" row
+    // Last Updated Text
     document.getElementById('updated-'+id).textContent = timeAgo(data.updatedAt);
 
-    // Map marker
+    // Update Map Marker
     if (markers[id]) {
       markers[id].setLatLng(loc);
       markers[id].setIcon(makeIcon(name));
@@ -401,9 +615,12 @@
       if (maps[id]) maps[id].panTo(loc);
       prevLoc[id] = loc;
     }
+
+    // Check Offline State
+    checkOverallAvailability();
   }
 
-  /* ── Real-time listeners via onSnapshot ── */
+  /* ── Real-time Firestore Listeners ── */
   ['amigo1','amigo2'].forEach(id => {
     const ref = doc(db, 'amigos', id);
     onSnapshot(ref, snap => {
@@ -415,19 +632,27 @@
     });
   });
 
-  /* ─────────────────────────────────────────
-     MODAL LOGIC (unchanged, but phone comes
-     from Firestore cache, not localStorage)
-  ───────────────────────────────────────── */
+  /* ── Modal Handling Functions ── */
   let activeModalAmigo = null;
 
   window.openModal = function(amigoId) {
+    trackEvent('amigo_card_click', { driver: amigoId });
     const a = amigoCache[amigoId];
     if (!a || a.status !== 'active' || !a.phone) return;
+    
     activeModalAmigo = amigoId;
     document.getElementById('modal-user-name').value = '';
-    document.getElementById('modal-platform').value  = 'Zomato';
-    document.getElementById('modal-hostel').value     = '';
+    document.getElementById('modal-user-phone').value = '';
+    document.getElementById('modal-pickup').value = 'Main Gate';
+    document.getElementById('modal-drop').value = '';
+    document.getElementById('modal-delivery-type').value = 'Food';
+    document.getElementById('modal-description').value = '';
+    document.getElementById('modal-quantity').value = '1';
+    document.getElementById('modal-size').value = 'Medium';
+    document.getElementById('modal-reach-time').value = '10 min';
+    
+    toggleFoodTimeField();
+    
     document.getElementById('delivery-modal').classList.add('open');
     setTimeout(() => document.getElementById('modal-user-name').focus(), 120);
   };
@@ -441,25 +666,92 @@
     if (e.target === document.getElementById('delivery-modal')) closeModal();
   };
 
+  window.toggleFoodTimeField = function() {
+    const type = document.getElementById('modal-delivery-type').value;
+    const foodContainer = document.getElementById('food-time-container');
+    if (type === 'Food') {
+      foodContainer.style.display = 'block';
+    } else {
+      foodContainer.style.display = 'none';
+    }
+  };
+
+  /* ── Format & Send WhatsApp Delivery Request ── */
   window.sendRequest = function() {
     const userName = document.getElementById('modal-user-name').value.trim();
-    const platform = document.getElementById('modal-platform').value;
-    const hostel   = document.getElementById('modal-hostel').value.trim();
+    const userPhone = document.getElementById('modal-user-phone').value.trim();
+    const pickup = document.getElementById('modal-pickup').value;
+    const drop = document.getElementById('modal-drop').value.trim();
+    const deliveryType = document.getElementById('modal-delivery-type').value;
+    const reachTime = document.getElementById('modal-reach-time').value;
+    const description = document.getElementById('modal-description').value.trim();
+    const quantity = document.getElementById('modal-quantity').value;
+    const size = document.getElementById('modal-size').value;
+
     if (!userName) {
       document.getElementById('modal-user-name').focus();
-      document.getElementById('modal-user-name').style.borderColor = '#ef4444';
       return;
     }
-    if (!hostel) {
-      document.getElementById('modal-hostel').focus();
-      document.getElementById('modal-hostel').style.borderColor = '#ef4444';
+    if (!drop) {
+      document.getElementById('modal-drop').focus();
       return;
     }
-    const a     = amigoCache[activeModalAmigo];
+
+    const a = amigoCache[activeModalAmigo];
     const phone = String(a.phone).replace(/\D/g,'');
-    const msg   = `Hey Amigo! I need a campus delivery%0A%0A👤 *Name:* ${encodeURIComponent(userName)}%0A📦 *Platform:* ${encodeURIComponent(platform)}%0A📍 *Deliver to:* ${encodeURIComponent(hostel)}`;
-    window.open('https://wa.me/' + phone + '?text=' + msg, '_blank');
+
+    // Build Formatted Message
+    let msgText = `Campus Delivery Request\n\n`;
+    msgText += `Customer:\n${userName}\n\n`;
+    msgText += `Phone:\n${userPhone || 'N/A'}\n\n`;
+    msgText += `Pickup:\n${pickup}\n\n`;
+    msgText += `Drop:\n${drop}\n\n`;
+    msgText += `Delivery Type:\n${deliveryType}\n\n`;
+    msgText += `Items:\n${description || 'N/A'}\n\n`;
+    msgText += `Quantity:\n${quantity}\n\n`;
+    msgText += `Approx Size:\n${size}\n`;
+
+    if (deliveryType === 'Food') {
+      msgText += `\nCustomer reaches gate in:\n${reachTime}\n`;
+    }
+
+    trackEvent('whatsapp_button_click', { driver: activeModalAmigo });
+    trackEvent('delivery_request_submitted', { delivery_type: deliveryType });
+
+    window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msgText), '_blank');
     closeModal();
+  };
+
+  /* ── Submit Delivery Help Form to Admin ── */
+  window.submitHelpRequest = function() {
+    const name = document.getElementById('help-name').value.trim();
+    const phone = document.getElementById('help-phone').value.trim();
+    const pickup = document.getElementById('help-pickup').value.trim();
+    const drop = document.getElementById('help-drop').value.trim();
+    const type = document.getElementById('help-type').value;
+    const desc = document.getElementById('help-desc').value.trim();
+
+    if (!name || !pickup || !drop) {
+      alert('Please fill out Name, Pickup, and Drop locations.');
+      return;
+    }
+
+    let msgText = `Campus Delivery Admin Help Request\n\n`;
+    msgText += `Customer:\n${name}\n\n`;
+    msgText += `Phone:\n${phone || 'N/A'}\n\n`;
+    msgText += `Pickup:\n${pickup}\n\n`;
+    msgText += `Drop:\n${drop}\n\n`;
+    msgText += `Delivery Type:\n${type}\n\n`;
+    msgText += `Description:\n${desc || 'N/A'}\n`;
+
+    trackEvent('help_request_submitted', { delivery_type: type });
+
+    const cleanAdminPhone = String(ADMIN_PHONE).replace(/\D/g,'');
+    window.open('https://wa.me/' + cleanAdminPhone + '?text=' + encodeURIComponent(msgText), '_blank');
+  };
+
+  window.scrollToHelpSection = function() {
+    document.getElementById('help-section').scrollIntoView({ behavior: 'smooth' });
   };
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
